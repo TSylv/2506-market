@@ -14,4 +14,29 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+
+router.get("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `SELECT id, title, description, price
+       FROM products
+       WHERE id = $1;`,
+      [id]
+    );
+
+    const product = result.rows[0];
+
+    if (!product) {
+      return res.status(404).send({ message: "Product not found" });
+    }
+
+    res.send(product);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 export default router;
