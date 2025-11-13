@@ -47,4 +47,32 @@ router.post("/", requireUser, async (req, res, next) => {
   }
 });
 
+
+router.get("/:id", requireUser, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const orderId = req.params.id;
+
+    const {
+      rows: [order],
+    } = await db.query(
+      `
+      SELECT id, date, note, user_id
+      FROM orders
+      WHERE id = $1
+      AND user_id = $2;
+      `,
+      [orderId, userId]
+    );
+
+    if (!order) {
+      return res.status(404).send({ message: "Order not found" });
+    }
+
+    res.send(order);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
