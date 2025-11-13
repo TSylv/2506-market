@@ -116,4 +116,48 @@ router.post("/:id/products", requireUser, async (req, res, next) => {
   }
 });
 
+
+router.get("/:id/products", requireUser, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const orderId = req.params.id;
+
+    const {
+      rows: [order],
+    } = await db.query(
+      `
+        SELECT id, user_id
+        FROM orders
+        WHERE id = $1
+        AND user_id = $2;
+      `,
+      [orderId, userId]
+    );
+
+    if (!order) {
+      return res.status(404).send({ message: "Order not found" });
+    }
+
+    const result = await db.query(
+      `
+        SELECT
+          products.id,
+          products.title,
+          products.description,
+          products.price,
+          orders_products.quantity
+        FROM orders_products
+        JOIN products
+          ON products.id = orders_products.product_id
+        WHERE orders_products.order_id = $1;
+      `,
+      [orderId]
+    );
+
+    res.send(result.rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
